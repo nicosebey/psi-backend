@@ -1,5 +1,5 @@
-import { TematicaPsicologia } from "src/modules/psicologo/entities/psicologo.entity";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { TematicaPsicologia } from 'src/modules/psicologo/entities/psicologo.entity';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('turno')
 export class Turno {
@@ -22,12 +22,15 @@ export class Turno {
   horaFin: string;
 
   @Column()
-  tematica: TematicaPsicologia
+  isVirtual: boolean;
 
-  @Column({ 
-    type: 'enum', 
+  @Column()
+  tematica: TematicaPsicologia;
+
+  @Column({
+    type: 'enum',
     enum: ['programado', 'completado', 'cancelado'],
-    default: 'programado'
+    default: 'programado',
   })
   estado: string;
 

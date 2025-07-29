@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Turno } from './entities/turno.entity';
@@ -16,9 +16,15 @@ export class TurnoService {
   async crearTurno(crearTurnoDto: CrearTurnoDto) {
     const { fecha, horaInicio, psicologo } = crearTurnoDto;
 
-    const estaDisponible = await this.estaHorarioDisponible(psicologo, fecha, horaInicio);
+    const estaDisponible = await this.estaHorarioDisponible(
+      psicologo,
+      fecha,
+      horaInicio,
+    );
     if (!estaDisponible) {
-      throw new Error('El horario seleccionado no está disponible');
+      throw new BadRequestException(
+        'El horario seleccionado no está disponible',
+      );
     }
 
     const horaFin = this.agregarHora(horaInicio);
@@ -31,8 +37,16 @@ export class TurnoService {
     return await this.turnoRepository.save(turno);
   }
 
-  async estaHorarioDisponible(psicologo: string, fecha: string, horaInicio: string): Promise<boolean> {
-    const horariosDisponibles = await this.disponibilidadService.obtenerHorariosDisponibles(psicologo, fecha);
+  async estaHorarioDisponible(
+    psicologo: string,
+    fecha: string,
+    horaInicio: string,
+  ): Promise<boolean> {
+    const horariosDisponibles =
+      await this.disponibilidadService.obtenerHorariosDisponibles(
+        psicologo,
+        fecha,
+      );
     if (!horariosDisponibles.includes(horaInicio)) {
       return false;
     }
@@ -42,8 +56,8 @@ export class TurnoService {
         psicologo,
         fecha,
         horaInicio,
-        estado: 'programado'
-      }
+        estado: 'programado',
+      },
     });
 
     return !turnoExistente;
@@ -53,10 +67,15 @@ export class TurnoService {
     const donde: any = { psicologo };
     if (fecha) donde.fecha = fecha;
 
-    return await this.turnoRepository.find({
+    const turnos = await this.turnoRepository.find({
       where: donde,
-      order: { fecha: 'ASC', horaInicio: 'ASC' }
+      order: { fecha: 'ASC', horaInicio: 'ASC' },
     });
+
+    return turnos.map((turno) => ({
+      ...turno,
+      esVirtual: turno.isVirtual ? 'Virtual' : 'Presencial',
+    }));
   }
 
   async getDiaMasConsultasPorPsicologo(psicologo: string) {
@@ -71,28 +90,42 @@ export class TurnoService {
       .addOrderBy('turno.fecha', 'ASC')
       .limit(1)
       .getRawOne();
-      
+
     return result;
   }
 
   async obtenerTurnosCliente(clienteEmail: string) {
     return await this.turnoRepository.find({
       where: { clienteEmail },
-      order: { fecha: 'ASC', horaInicio: 'ASC' }
+      order: { fecha: 'ASC', horaInicio: 'ASC' },
     });
   }
 
   async cancelarTurno(turnoId: number) {
-    return await this.turnoRepository.update(turnoId, { 
-      estado: 'cancelado' 
+    return await this.turnoRepository.update(turnoId, {
+      estado: 'cancelado',
     });
   }
 
   async obtenerTurnosDisponibles(psicologo: string, fecha: string) {
-    const horariosDisponibles = await this.disponibilidadService.obtenerHorariosDisponibles(psicologo, fecha);
-    const horariosOcupados = await this.obtenerHorariosOcupados(psicologo, fecha);
-    
-    return horariosDisponibles.filter(horario => !horariosOcupados.includes(horario));
+    const horariosDisponibles =
+      await this.disponibilidadService.obtenerHorariosDisponibles(
+        psicologo,
+        fecha,
+      );
+    const horariosOcupados = await this.obtenerHorariosOcupados(
+      psicologo,
+      fecha,
+    );
+
+    return horariosDisponibles
+      .filter(
+        (horario: any) => !horariosOcupados.includes(horario.hora || horario),
+      )
+      .map((horario: any) => ({
+        hora: horario.hora || horario,
+        esVirtual: horario.isVirtual ? 'virtual' : 'presencial',
+      }));
   }
 
   async getTematicaMasConsultada() {
@@ -100,24 +133,27 @@ export class TurnoService {
       .createQueryBuilder('turno')
       .select('turno.tematica', 'tematica')
       .addSelect('COUNT(*)', 'cantidad')
-      .where('turno.estado IN (:...estados)', { estados: ['completado', 'programado'] })
+      .where('turno.estado IN (:...estados)', {
+        estados: ['completado', 'programado'],
+      })
       .groupBy('turno.tematica')
       .orderBy('cantidad', 'DESC')
       .limit(1)
       .getRawOne();
-      
+
     return result;
   }
-    
 
-
-  private async obtenerHorariosOcupados(psicologo: string, fecha: string): Promise<string[]> {
+  private async obtenerHorariosOcupados(
+    psicologo: string,
+    fecha: string,
+  ): Promise<string[]> {
     const turnos = await this.turnoRepository.find({
       where: { psicologo, fecha, estado: 'programado' },
-      select: ['horaInicio']
+      select: ['horaInicio'],
     });
 
-    return turnos.map(turno => turno.horaInicio);
+    return turnos.map((turno) => turno.horaInicio);
   }
 
   private agregarHora(hora: string): string {

@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query } from '@nestjs/common';
 import { CrearTurnoDto } from './dto/create-turno.dto';
 import { TurnoService } from './turno.service';
-
 
 @Controller('turnos')
 export class TurnoController {
@@ -15,7 +14,7 @@ export class TurnoController {
   @Get('psicologo/:psicologo')
   async obtenerTurnosProveedor(
     @Param('psicologo') psicologo: string,
-    @Query('fecha') fecha?: string
+    @Query('fecha') fecha?: string,
   ) {
     return await this.turnoService.obtenerTurnosPsicologo(psicologo, fecha);
   }
@@ -26,19 +25,19 @@ export class TurnoController {
   }
 
   @Get('tematicaMasConsultada')
-  async getTematicaMasConsultada(){
-    return await this.turnoService.getTematicaMasConsultada()
+  async getTematicaMasConsultada() {
+    return await this.turnoService.getTematicaMasConsultada();
   }
 
   @Get('diaMasOcupado/:psicologo')
-  async obtenerDiaMasOcupado(@Param('psicologo') psicologo:string){
-    return await this.turnoService.getDiaMasConsultasPorPsicologo(psicologo)
+  async obtenerDiaMasOcupado(@Param('psicologo') psicologo: string) {
+    return await this.turnoService.getDiaMasConsultasPorPsicologo(psicologo);
   }
 
   @Get('disponibles/:psicologo')
   async obtenerTurnosDisponibles(
     @Param('psicologo') psicologo: string,
-    @Query('fecha') fecha: string
+    @Query('fecha') fecha: string,
   ) {
     return await this.turnoService.obtenerTurnosDisponibles(psicologo, fecha);
   }

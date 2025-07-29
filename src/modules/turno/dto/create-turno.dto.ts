@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsString } from "class-validator";
-import { TematicaPsicologia } from "src/modules/psicologo/entities/psicologo.entity";
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
+import { TematicaPsicologia } from 'src/modules/psicologo/entities/psicologo.entity';
 
 // DTO para crear cita
 export class CrearTurnoDto {
@@ -12,19 +12,23 @@ export class CrearTurnoDto {
   clienteEmail: string;
 
   @IsString()
-  @IsNotEmpty() 
-  fecha: string; 
+  @IsNotEmpty()
+  fecha: string;
 
   @IsString()
   @IsNotEmpty()
-  horaInicio: string; 
-  
+  horaInicio: string;
+
   @IsString()
   @IsNotEmpty()
   horaFin: string;
 
+  @IsBoolean()
+  @IsNotEmpty()
+  isVirtual: boolean;
+
   @IsString()
   estado?: string;
-  
-  tematica:TematicaPsicologia
+
+  tematica: TematicaPsicologia;
 }

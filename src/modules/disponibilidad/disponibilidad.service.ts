@@ -12,30 +12,35 @@ export class DisponibilidadService {
   ) {}
 
   async crearDisponibilidad(crearDisponibilidadDto: CrearDisponibilidadDto) {
-   
-      
-      const {psicologoId, diaDeLaSemana} = crearDisponibilidadDto
-      const disponibilidadExistente = await this.disponibilidadRepository.findOne({
-        where: { psicologoId, diaDeLaSemana , isActive: true }
-      });
-      
-      if (disponibilidadExistente) {
-        throw new ConflictException('Ya existe una disponibilidad para este día. Actualiza la existente.');
-      }
-      const disponibilidad = this.disponibilidadRepository.create(crearDisponibilidadDto);
-      return await this.disponibilidadRepository.save(disponibilidad);
-    
-    
+    const { psicologoId, diaDeLaSemana } = crearDisponibilidadDto;
+    const disponibilidadExistente = await this.disponibilidadRepository.findOne(
+      {
+        where: { psicologoId, diaDeLaSemana, isActive: true },
+      },
+    );
+
+    if (disponibilidadExistente) {
+      throw new ConflictException(
+        'Ya existe una disponibilidad para este día. Actualiza la existente.',
+      );
+    }
+    const disponibilidad = this.disponibilidadRepository.create(
+      crearDisponibilidadDto,
+    );
+    return await this.disponibilidadRepository.save(disponibilidad);
   }
 
   async obtenerDisponibilidadUsuario(psicologoId: string) {
     return await this.disponibilidadRepository.find({
       where: { psicologoId, isActive: true },
-      order: { diaDeLaSemana: 'ASC', horaInicio: 'ASC' }
+      order: { diaDeLaSemana: 'ASC', horaInicio: 'ASC' },
     });
   }
 
-  async actualizarDisponibilidad(id: number, datosActualizacion: Partial<CrearDisponibilidadDto>) {
+  async actualizarDisponibilidad(
+    id: number,
+    datosActualizacion: Partial<CrearDisponibilidadDto>,
+  ) {
     return await this.disponibilidadRepository.update(id, datosActualizacion);
   }
 
@@ -44,11 +49,14 @@ export class DisponibilidadService {
   }
 
   // Generar horarios disponibles para un día específico
-  async obtenerHorariosDisponibles(psicologoId: string, fecha: string): Promise<string[]> {
+  async obtenerHorariosDisponibles(
+    psicologoId: string,
+    fecha: string,
+  ): Promise<string[]> {
     const diaDeLaSemana = new Date(fecha).getDay();
-    
+
     const disponibilidad = await this.disponibilidadRepository.findOne({
-      where: { psicologoId, diaDeLaSemana, isActive: true }
+      where: { psicologoId, diaDeLaSemana, isActive: true },
     });
 
     if (!disponibilidad) return [];
@@ -62,7 +70,10 @@ export class DisponibilidadService {
     let horaActual = horaInicioNum;
     let minutoActual = minutoInicioNum;
 
-    while (horaActual < horaFinNum || (horaActual === horaFinNum && minutoActual <= minutoFinNum - 60)) {
+    while (
+      horaActual < horaFinNum ||
+      (horaActual === horaFinNum && minutoActual <= minutoFinNum - 60)
+    ) {
       const horario = `${horaActual.toString().padStart(2, '0')}:${minutoActual.toString().padStart(2, '0')}`;
       horarios.push(horario);
 

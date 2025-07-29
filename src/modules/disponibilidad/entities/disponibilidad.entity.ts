@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { IsOptional } from 'class-validator';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('disponibilidad')
 export class Disponibilidad {
@@ -10,6 +11,10 @@ export class Disponibilidad {
 
   @Column()
   diaDeLaSemana: number; // 0-6
+
+  @Column()
+  @IsOptional()
+  isVirtual: boolean;
 
   @Column({ type: 'time' })
   horaInicio: string;
